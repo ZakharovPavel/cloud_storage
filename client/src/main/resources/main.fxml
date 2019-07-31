@@ -7,14 +7,23 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Hyperlink?>
 <VBox fx:id="rootNode" alignment="CENTER" prefHeight="500.0" prefWidth="700.0"
       style="-fx-background-color: linear-gradient(#fff 0%, #eee 10%, #ddd 90%, #bbb 100%);"
       xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.172-ea"
       fx:controller="ru.zakharov.client.MainController">
-    <VBox fx:id="authPanel">
+    <VBox fx:id="authPanel" maxWidth="250">
         <TextField fx:id="loginField" promptText="login"/>
         <PasswordField fx:id="passwordField" promptText="password" />
-        <Button text="Authorisarion" onAction="#tryToAuth" />
+        <HBox>
+            <Button text="Authorisarion" onAction="#tryToAuth" />
+            <Hyperlink text="Create an account" onAction="#newAccountHyperlink" />
+        </HBox>
+    </VBox>
+    <VBox fx:id="regPanel" maxWidth="250" managed="false" visible="false">
+        <TextField fx:id="regLoginField" promptText="login"/>
+        <PasswordField fx:id="regPasswordField" promptText="password" />
+        <Button text="Registration" onAction="#registrationBtn" />
     </VBox>
     <HBox VBox.vgrow="ALWAYS" fx:id="uiPanel" managed="false" visible="false">
         <VBox HBox.hgrow="ALWAYS">
@@ -22,7 +31,7 @@
                 <TextField fx:id="tfClientFileName" focusTraversable="false"
                            promptText="Search file at client..." HBox.hgrow="ALWAYS"/>
                 <Button onAction="#pressOnUploadBtn" text="Upload"/>
-                <Button onAction="#pressOnRefreshBtn" text="Refresh"/>
+                <Button onAction="#pressOnClientRefreshBtn" text="Refresh"/>
                 <Button onAction="#pressOnDeleteBtnClient" text="Delete"/>
             </HBox>
             <ListView fx:id="clientFilesList" VBox.vgrow="ALWAYS"/>
@@ -32,7 +41,7 @@
                 <TextField fx:id="tfServerFileName" focusTraversable="false"
                            promptText="Search file on server..." HBox.hgrow="ALWAYS"/>
                 <Button onAction="#pressOnDownloadBtn" text="Download"/>
-                <Button onAction="#pressOnRefreshBtn" text="Refresh"/>
+                <Button onAction="#pressOnServerRefreshBtn" text="Refresh"/>
                 <Button onAction="#pressOnDeleteBtnServer" text="Delete"/>
             </HBox>
             <ListView fx:id="serverFilesList" VBox.vgrow="ALWAYS"/>
