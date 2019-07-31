@@ -30,7 +30,16 @@ public class MainController implements Initializable {
     VBox authPanel;
 
     @FXML
+    VBox regPanel;
+
+    @FXML
     HBox uiPanel;
+
+    @FXML
+    TextField regLoginField;
+
+    @FXML
+    PasswordField regPasswordField;
 
     @FXML
     TextField loginField;
@@ -51,6 +60,7 @@ public class MainController implements Initializable {
     ListView<String> serverFilesList;
 
     private boolean isAuthorised;
+    private boolean regState;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -60,12 +70,16 @@ public class MainController implements Initializable {
                 while (true) {
                     AbstractMessage am = Network.readObject();
                     if (am instanceof TextRequest) {
-
+                        String tr = ((TextRequest) am).getCommand();
+                        if (tr.startsWith("/authok")) {
+                            setAuthorised(true);
+                        }
                     }
                     if (am instanceof FileMessage) {
                         FileMessage fm = (FileMessage) am;
                         Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
-                        refreshLocalFilesList();
+                        refreshClientFilesList();
+                        refreshServerFilesList();
                     }
                 }
             } catch (ClassNotFoundException | IOException e) {
@@ -76,7 +90,8 @@ public class MainController implements Initializable {
         });
         t.setDaemon(true);
         t.start();
-        refreshLocalFilesList();
+        refreshClientFilesList();
+        refreshServerFilesList();
     }
 
     public void setAuthorised(boolean isAuthorised) {
@@ -86,17 +101,27 @@ public class MainController implements Initializable {
             authPanel.setManaged(true);
             uiPanel.setVisible(false);
             uiPanel.setManaged(false);
+            if (regState) {
+                authPanel.setVisible(false);
+                authPanel.setManaged(false);
+                regPanel.setVisible(true);
+                regPanel.setManaged(true);
+            }
         } else {
             authPanel.setVisible(false);
             authPanel.setManaged(false);
+            regPanel.setVisible(false);
+            regPanel.setManaged(false);
             uiPanel.setVisible(true);
             uiPanel.setManaged(true);
         }
     }
 
     public void tryToAuth(ActionEvent actionEvent) {
-        isAuthorised = true;
-        setAuthorised(isAuthorised);
+        TextRequest tr = new TextRequest("/auth " + loginField.getText() + " " + passwordField.getText());
+        Network.sendMsg(tr);
+        loginField.clear();
+        passwordField.clear();
     }
 
     public void pressOnUploadBtn(ActionEvent actionEvent) {
@@ -117,12 +142,21 @@ public class MainController implements Initializable {
         }
     }
 
-    public void refreshLocalFilesList() {
+    public void refreshClientFilesList() {
         updateUI(() -> {
             try {
                 clientFilesList.getItems().clear();
-                serverFilesList.getItems().clear();
                 Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> clientFilesList.getItems().add(o));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void refreshServerFilesList() {
+        updateUI(() -> {
+            try {
+                serverFilesList.getItems().clear();
                 Files.list(Paths.get("server_storage")).map(p -> p.getFileName().toString()).forEach(o -> serverFilesList.getItems().add(o));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -138,8 +172,12 @@ public class MainController implements Initializable {
         }
     }
 
-    public void pressOnRefreshBtn(ActionEvent actionEvent) {
-        refreshLocalFilesList();
+    public void pressOnClientRefreshBtn(ActionEvent actionEvent) {
+        refreshClientFilesList();
+    }
+
+    public void pressOnServerRefreshBtn(ActionEvent actionEvent) {
+        refreshServerFilesList();
     }
 
     public void pressOnDeleteBtnClient(ActionEvent actionEvent) {
@@ -158,5 +196,16 @@ public class MainController implements Initializable {
             e.printStackTrace();
         }
         tfServerFileName.clear();
+    }
+
+    public void newAccountHyperlink(ActionEvent actionEvent) {
+        regState = true;
+        setAuthorised(false);
+    }
+
+    public void registrationBtn(ActionEvent actionEvent) {
+        TextRequest tr = new TextRequest("/reg " + regLoginField.getText() + " " + regPasswordField.getText());
+        Network.sendMsg(tr);
+        setAuthorised(true);
     }
 }

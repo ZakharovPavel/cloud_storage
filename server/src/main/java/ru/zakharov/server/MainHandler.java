@@ -7,15 +7,38 @@ import io.netty.util.ReferenceCountUtil;
 import ru.zakharov.common.AbstractMessage;
 import ru.zakharov.common.FileMessage;
 import ru.zakharov.common.FileRequest;
+import ru.zakharov.common.TextRequest;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
+            if (msg instanceof TextRequest) {
+                String str = ((TextRequest) msg).getCommand();
+                if (str.startsWith("/auth")) {
+                    String[] tokens = str.split(" ");
+                    int newId = AuthService.getIdByLoginAndPass(tokens[1], tokens[2]);
+                    if (newId != -1) {
+                        TextRequest tr = new TextRequest("/authok");
+                        ctx.writeAndFlush(tr);
+                    }
+                }
+                if (str.startsWith("/reg")) {
+                    String[] tokens = str.split(" ");
+                    if (!AuthService.checkLogin(tokens[1])) {
+                        AuthService.createAnAccount(tokens[1], tokens[2]);
+                        TextRequest tr = new TextRequest("/regok");
+                        ctx.writeAndFlush(tr);
+                    }
+                }
+            }
             if (msg instanceof FileRequest) {
                 FileRequest fr = (FileRequest) msg;
                 if (Files.exists(Paths.get("server_storage/" + fr.getFilename()))) {
